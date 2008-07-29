@@ -8,13 +8,13 @@ FC8 yum -y install:
 
 web.py
 
-2. Extract the Downloadable tarball
-
-wget -qO - http://<>/tgz | tar -xvzf -
-
 3. Setup the Command Completion
 
 a. Create a directory to hold the TrackTime application. E.g. mkdir ~/tracktime/
 b. Change directories to that newly created directory.
+c. Extract the Downloadable tarball
+     wget -qO - http://tracktime.googlecode.com/files/tracktime-current.tgz | tar -xvzf -
+d. Setup Bash Command Completion
    Then copy & paste the following line for updating your .bashrc:
      echo "source $(pwd)/completion.bash $(pwd)/" >> ~/.bashrc
+
