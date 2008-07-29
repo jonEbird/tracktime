@@ -1,0 +1,21 @@
+$def with (headerdata)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>TaskTracker Awesomeness</title>
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+<style type="text/css">
+/* <![CDATA[ */
+p.header a { padding-right: 1em }
+/* ]]> */
+</style>
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+</body>
+</html>

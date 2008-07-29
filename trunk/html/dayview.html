@@ -1,0 +1,109 @@
+$def with (cssdata, headerdata, dayheading, clockdata, daydata, daytext)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Day View</title>
+<script type="text/javascript" src="/static/prototype.js"></script>
+<script language="JavaScript">
+<!--
+
+function agent(v) { return(Math.max(navigator.userAgent.toLowerCase().indexOf(v),0)); }
+function xy(e,v) { return(v?(agent('msie')?event.clientY+document.body.scrollTop:e.pageY):(agent('msie')?event.clientX+document.body.scrollTop:e.pageX)); }
+
+
+function dragOBJ_orig(d,e) {
+    function drag(e) { if(!stop) { d.style.left=(tY=xy(e)+oX-eX+'px'); } }
+    var oX=parseInt(d.style.left),oY=parseInt(d.style.top),eX=xy(e),eY=xy(e,1),tX,tY,stop;
+    document.onmousemove=drag;
+    document.onmouseup=function(){ stop=1; document.onmousemove=''; document.onmouseup=''; 
+                                   new Ajax.Updater('daytext', '/updatetask/' + d.id + '/' + (parseInt(d.style.left) - oX), {method: 'post'}); };
+}
+
+function dragOBJ(d,e) {
+    function drag(e) { if(!stop) { d.style.left=(tY=xy(e)+oX-eX+'px'); } }
+    var oX=parseInt(d.style.left),oY=parseInt(d.style.top),eX=xy(e),eY=xy(e,1),tX,tY,stop;
+    document.onmousemove=drag;
+    document.onmouseup=function(){ stop=1; document.onmousemove=''; document.onmouseup=''; 
+                                   new Ajax.Updater('daytext', '/updatetask/' + d.id + '/' + (parseInt(d.style.left) - oX), 
+                                       {method: 'post', 
+				        onSuccess: function() { new Ajax.Updater('clockdata', '/clockdatafor/' + d.id, {method: 'get'}); }}); 
+                                 };
+}
+
+function dragNewOBJ(d,e) {
+    function drag(e) { if(!stop) { d.style.left=(tY=xy(e)+oX-eX+'px'); } }
+    var oX=parseInt(d.style.left),oY=parseInt(d.style.top),eX=xy(e),eY=xy(e,1),tX,tY,stop;
+    document.onmousemove=drag;
+    document.onmouseup=function(){ stop=1; document.onmousemove=''; document.onmouseup='';
+        \$(d.id).onmousedown='';
+        \$(d.id).removeClassName('newtask');
+	\$(d.id).addClassName('active');
+        new Ajax.Updater('daytext', '/' + d.id + '/' + (parseInt(d.style.left) - oX), 
+                { method: 'get', 
+                  insertion: Insertion.Top,
+		  onSuccess: function() { \$(minutes).value = "30"; }
+                }); 
+    };
+}
+
+function addcolor(name) {
+  \$(name + '_data').addClassName('active')
+  \$(name + '_text').addClassName('active')
+}
+function rmcolor(name) {
+  \$(name + '_data').removeClassName('active')
+  \$(name + '_text').removeClassName('active')
+}
+
+function autocomplete(d,e) {
+   var letters = d.value;
+   if (letters[0] == 'a') {
+       d.value = 'aardvark';
+   } else if (letters[0] == 'b') {
+       d.value = 'bumble-bee';
+   } else if (letters[0] == 'c') {
+       d.value = 'caribou';
+   }
+   return true;
+}
+
+//-->
+</script>
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+<style type="text/css">
+/* <![CDATA[ */
+$:cssdata.strip()
+/* ]]> */
+</style>
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+<div class="clear"></div>
+
+<div id="dayheading">
+$:dayheading.strip()
+</div>
+
+<div class="clear"></div>
+
+<div id="clockdata">
+$:clockdata.strip()
+</div>
+
+<div id="daydata">
+$:daydata.strip()
+</div>
+
+<div class="clear"></div>
+
+<div id="daytext">
+$:daytext.strip()
+</div>
+
+</body>
+</html>

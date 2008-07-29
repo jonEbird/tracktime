@@ -1,0 +1,10 @@
+
+Embed into web page
+<iframe src='http://docs.google.com/EmbedSlideshow?docid=dcdsgrtn_15vqtd4rf3' frameborder='0' width='410' height='342'></iframe>
+
+http://docs.google.com/Presentation?id=dcdsgrtn_15vqtd4rf3
+
+* Convert listing output back into tt.py input commands
+  Can use this sed statement:
+      sed 's/^\(.*\) Worked on \(.*\) for \([0-9]*\) minutes: \(.*\)$/tt.py \2 \3 \4 -d "\1"/g'
+
