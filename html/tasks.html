@@ -1,0 +1,27 @@
+$def with (headerdata, tasks)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Future Tasks</title>
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+<style type="text/css">
+/* <![CDATA[ */
+/* ]]> */
+</style>
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+<p class="tasks">
+$if tasks:
+    $:tasks.strip()
+$else:
+    <p>No work done on this day.</p>
+</p>
+
+</body>
+</html>
