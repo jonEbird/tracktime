@@ -12,17 +12,14 @@ The command line usage can be seen by running `tt.py --help`. The general syntax
 
 == Here are some examples ==
 
-General recording of a 30 minute task on the rorlinux project. 
-`$ tt.py rorlinux 30 Meeting with Randy`
-
-Clock in/out
-`$ tt.py clock 0 Arrving. -d 07:17`
-
-Outside events, such as night page
-`$ tt.py breakfix 50 blast page concerning TOPS`
-
-List Work today, this week, or all - all
-`$ tt.py -l     $ tt.py -la     $ tt.py -laa`
-
-List just the work for taskX
-`$ tt.py holiday -laa`
+Simple Usage:
+  * General recording of a 30 minute task on the rorlinux project. 
+    `$ tt.py rorlinux 30 Meeting with Randy`
+  * Clock in/out
+    `$ tt.py clock 0 Arrving. -d 07:17`
+  * Outside events, such as night page
+    `$ tt.py breakfix 50 blast page concerning TOPS`
+  * List Work today, this week, or all - all
+    `$ tt.py -l     $ tt.py -la     $ tt.py -laa`
+  * List just the work for taskX such as `holiday`.
+    `$ tt.py holiday -laa`
