@@ -8,6 +8,7 @@ This is a quick guide in entering current activities via the command line.
 If you have not already, start with the InstallGuide so you can use bash command completion available to the `tt.py`. This means that after typing tt.py, hitting TAB TAB will show all of your current projects and starting to type one of them and hitting TAB again will complete the word.
 
 The command line usage can be seen by running `tt.py --help`. The general syntax is:  
+
 `tt.py task minutes description [more description] [options]`
 
 == Here are some examples ==
