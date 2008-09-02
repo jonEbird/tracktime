@@ -327,33 +327,23 @@ class FutureURL:
     def GET(self, requestedtask):
         headerdata = getHeaderHTML()
         pagetitle = ''
-        futuredata = '<table>\n<tr>\n'
+        futuredata = ''
         moreedits = ''
         cur_task = ''
-        bars = ''
-        max_display_pixels = 100
         task_color = {}
-        task_total = {}
         task_count = 0
 
         if requestedtask:
             todos = [t for t in Todos.select(Todos.q.task==requestedtask, orderBy=Todos.q.duedate) ]
+            todos.reverse() # newest to oldest
+            task_total = 0
             pagetitle = '<h3><a href="/future">TASK %s</a></h3>' % (requestedtask)
-            futuredata = '<ol>\n'
-            for todo in todos:
-                #epoch, task, title, body, duration, complete = todo
-                if todo.completed:
-                    continue
-                if not task_total.has_key(todo.task):
-                    task_total[todo.task] = todo.duration
-                else:
-                    task_total[todo.task] += todo.duration
-            for task, total in task_total.iteritems():
-                bars += '<h3>%s will take %d hours to complete.</h3>\n' % (task, total/60)
 
             N = 0
             for todo in todos:
                 #epoch, task, title, body, duration, complete = todo
+                if not todo.completed:
+                    task_total += todo.duration
                 if not task_color.has_key(todo.task):
                     task_color[todo.task] = color_samples[task_count % len(color_samples)]
                     task_count += 1
@@ -363,42 +353,31 @@ class FutureURL:
                 futuredata += '<li class="%s"><span class="todotitle" ondblclick="togglecomplete(this, %d);">%s</span>\n  <p class="tododuedate">%s</p>\n  <p class="todobody" id="%s_%d" ondblclick="edittodobody(this, %d);">%s</p>\n</li>\n' % \
                     (completed_id, todo.id, todo.title, todo.duedate.strftime('%Y-%m-%d %H:%M'), requestedtask, N, N, web.net.htmlquote(todo.body).replace('\n', '<br>\n'))
                 N += 1
-            futuredata += '</ol>\n'
+            futuredata = '<ol>\n%s</ol>\n' % futuredata
 
-        else:
+            pagetitle += '\n<h3>%s will take %d hours to complete.</h3>\n' % (requestedtask, task_total/60)
+
+        else: # all tasks together
             todos = [t for t in Todos.select(orderBy=Todos.q.duedate) ]
-            pagetitle = '<h3>Each TODO Item from Each Task</h3>'
-            futuredata = '<table>\n<tr>\n'
-            tasks_wtodos = []
+            todos.reverse() # newest to oldest
+            pagetitle = '<h3>Incomplete TODO Items from Each Task</h3>'
             for todo in todos:
                 #epoch, task, title, body, duration, complete = todo
-                tasks_wtodos.append(todo.task)
+                if todo.completed:
+                    continue
                 if not task_color.has_key(todo.task):
                     task_color[todo.task] = color_samples[task_count % len(color_samples)]
                     task_count += 1
                 futuredata += '<tr>\n  <td>%s</td>\n  <td><a style="color:%s;" href="/future/%s">%s</a></td>\n  <td onclick="editme(this, event);">%s</td>\n</tr>\n' % \
                               (todo.duedate.strftime('%Y-%m-%d %H:%M'), task_color[todo.task], todo.task, todo.task, todo.title)
 
-            for todo in todos:
-                #epoch, task, title, body, duration, complete = todo
-                if todo.completed:
-                    continue
-                if not task_total.has_key(todo.task):
-                    task_total[todo.task]  = todo.duration
-                else:
-                    task_total[todo.task] += todo.duration
-            if task_total:
-                max_duration = max(task_total.values())
-            for task, total in task_total.iteritems():
-                bars += '<a href="/future/%s"><p style="border:solid; color:%s; height:%dpx;">%s<br>%d hours</p></a>\n' % (task, task_color[task], total * max_display_pixels / max_duration, task, total / 60) # width:30px;
-
-            futuredata += '</table>\n'
+            futuredata = '<table>\n%s</table>\n' % futuredata
 
             moreedits = '<h3>Start Planning TODO Items for These Tasks</h3>\n<table>\n'
             maxcolumns, columns = 5, 0
             # now for the tasks which have had no planning.
             for t in Tasks.select(orderBy=Tasks.q.task):
-                if t.task not in tasks_wtodos:
+                if t.task not in task_color:
                     if not columns:
                         moreedits += '<tr>\n'
                     moreedits += '  <td><a href="/futureedit/%s">%s</a></td>\n' % (t.task, t.task)
@@ -408,7 +387,7 @@ class FutureURL:
                         columns = 0
             moreedits += '</table>\n'
 
-        print render.future(headerdata, pagetitle, requestedtask, bars, futuredata, moreedits, cache=False)
+        print render.future(headerdata, pagetitle, requestedtask, futuredata, moreedits, cache=False)
 
 class BargraphURL:
     def GET(self, year1, month1, day1, year2, month2, day2):
@@ -855,6 +834,7 @@ def parsetodolist(filepath, taskname):
     completed = 0
     duedate = 0
     nextstarttime = 0
+    default_duedate = int(time.time()) + 604800 # you get a week (60*60*24*7) to complete this *when a default is needed*
 
     # returning 'tasks'; list of list for each numbered task in the todo file (see .append() for fields)
     tasks = []
@@ -888,7 +868,12 @@ def parsetodolist(filepath, taskname):
 
         completed += len(iscompleted_re.findall(line))
         if date_re.search(line):
-            duedate = int(time.mktime(time.strptime(date_re.findall(line)[0] + ' 12:00' , '%Y-%m-%d %H:%M')))
+            try:
+                duedate = int(time.mktime(time.strptime(date_re.findall(line)[0] + ' 12:00' , '%Y-%m-%d %H:%M')))
+            except (ValueError), e:
+                # problem converting their date, such as specifying 31st day in September
+                # getting default duedate of one week
+                duedate = default_duedate
 
     fh.close()
     if title:
@@ -1156,7 +1141,7 @@ Valid date format supported include:
                       help="change the base directory where I expect to see the directory representation of your tasks")
     parser.add_option("--user", dest="user",
                       help="define a new user for web authorization or update password")
-    parser.add_option("--pam-service", dest="pam",
+    parser.add_option("--pam", dest="pam",
                       help="enable PAM for authentication and choose with service file to use.")
 
     (options, args) = parser.parse_args()

@@ -1,4 +1,4 @@
-$def with (headerdata, pagetitle, requestedtask, bars, futuredata, moreedits)
+$def with (headerdata, pagetitle, requestedtask, futuredata, moreedits)
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -162,10 +162,6 @@ $:headerdata.strip()
 $:pagetitle.strip()
 $if requestedtask:
     <noscript><a href="/futureedit/$requestedtask">EDIT</a></noscript>
-</div>
-
-<div id='bars' ondblclick='Redirect("/futureedit/$requestedtask")'>
-$:bars.strip()
 </div>
 
 <div class="clear"></div>
