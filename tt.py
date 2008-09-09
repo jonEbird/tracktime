@@ -791,12 +791,9 @@ def shellescape(s):
     return s
 
 def lstasks(epoch, all=0, task=None, backupmode=False):
-
     weekstartson=0 # mon=0, tue=1, wed=2, thr=3, Fri = 4, Sat=5, Sun=6
     t1 = time.localtime(epoch)
     day = 86400 # 60*60*24
-    wk_start = time.localtime(epoch - (t1.tm_wday - weekstartson) * day)
-    wk_end = time.localtime(epoch + (weekstartson + 7 - t1.tm_wday) * day)
 
     conditions = []
     if task: conditions.append(Journal.q.task==task)
@@ -805,6 +802,8 @@ def lstasks(epoch, all=0, task=None, backupmode=False):
         conditions.append(Journal.q.start >= datetime.datetime(t1.tm_year, t1.tm_mon, t1.tm_mday, 0,0,0))
         conditions.append(Journal.q.start <= datetime.datetime(t1.tm_year, t1.tm_mon, t1.tm_mday, 23,59,59))
     elif all == 1: # week
+        wk_start = time.localtime(epoch - (t1.tm_wday - weekstartson) * day)
+        wk_end = time.localtime(epoch + (weekstartson + 7 - t1.tm_wday) * day)
         conditions.append(Journal.q.start >= datetime.datetime(wk_start.tm_year, wk_start.tm_mon, wk_start.tm_mday, 0,0,0))
         conditions.append(Journal.q.start <= datetime.datetime(wk_end.tm_year, wk_end.tm_mon, wk_end.tm_mday, 23,59,59))
     
@@ -817,6 +816,142 @@ def lstasks(epoch, all=0, task=None, backupmode=False):
 def timeshift(epoch, delta_minutes):
     # FIXME: needs to take into account that I'd like to work only on business hours.
     return epoch + (delta_minutes * 60)
+
+def parsenaturaldatetime(s):
+    """Parse natural date and time language from string and return epoch
+
+    Examples:
+      next friday; next week on tuesday; tomorrow at 2pm; 3 days from now; in 4 days; at noon;
+      last tues; 2 days ago; yesterday
+      cob(close of business); eod(end of day)
+      13:53
+      on Friday; on tue
+    """
+
+    epoch = time.time()
+    t1 = time.localtime(epoch)
+    day = 86400 # 60*60*24
+    unit2days = { 'day': 1, 'week': 7, 'month': 30, 'year': 365, 'quarter': 90 }
+    
+    tomorrow_re = 'tomorrow'
+    if re.search(tomorrow_re, s.lower()):
+        epoch += day
+        t1 = time.localtime(epoch)
+
+    yesterday_re = 'yesterday'
+    if re.search(yesterday_re, s.lower()):
+        epoch -= day
+        t1 = time.localtime(epoch)
+    
+    # FIXME!!! doesn't exclude the " ago"
+    # something to do with the trailing 's'
+    xx_unit_re = '(\d+)\s+(%s)(?!\s+ago)' % "|".join(unit2days.keys())
+    for n, unit in re.findall(xx_unit_re, s.lower().replace('s ', ' ')):
+        epoch += unit2days[unit] * int(n) * day
+        t1 = time.localtime(epoch)
+
+    xx_unit_ago_re = '(\d+)\s+(%s)s?\s+ago' % "|".join(unit2days.keys())
+    for n, unit in re.findall(xx_unit_ago_re, s.lower()):
+        epoch -= unit2days[unit] * int(n) * day
+        t1 = time.localtime(epoch)
+
+    # weekday_re needs to have a reference in the days_from_now dict
+    weekday_re = '(?:next|by|this) (sunday|sun|monday|mon|tuesday|tue|wednesday|wed|thursday|thr|thu|friday|fri|saturday|sat|week|month|year)'
+    for next_day in re.findall(weekday_re, s.lower()):
+        # FYI: mon=0, tue=1, wed=2, thr=3, Fri = 4, Sat=5, Sun=6
+        days = map(lambda n: n + 7 if n <= 0 else n, [ i - t1.tm_wday for i in range(7) ])
+        days_from_now = {
+            'monday': days[0], 'mon': days[0],
+            'tuesday': days[1], 'tue': days[1],
+            'wednesday': days[2], 'wed': days[2],
+            'thursday': days[3], 'thr': days[3], 'thu': days[3],
+            'friday': days[4], 'fri': days[4],
+            'saturday': days[5], 'sat': days[5],
+            'sunday': days[6], 'sun': days[6],
+            'week': unit2days['week'],
+            'month': unit2days['month'],
+            'year': unit2days['year'],
+            'quarter': unit2days['quarter'],
+            }
+        epoch += days_from_now[next_day] * day
+        t1 = time.localtime(epoch)
+
+    # weekday_re needs to have a reference in the days_from_now dict
+    weekday_re = '(?:last) (sunday|sun|monday|mon|tuesday|tue|wednesday|wed|thursday|thr|thu|friday|fri|saturday|sat|week|month|year)'
+    for last_day in re.findall(weekday_re, s.lower()):
+        # FYI: mon=0, tue=1, wed=2, thr=3, Fri = 4, Sat=5, Sun=6
+        days = map(lambda n: n if n > 0 else n + 7,  [ t1.tm_wday - i for i in range(7) ])
+        days_from_now = {
+            'monday': days[0], 'mon': days[0],
+            'tuesday': days[1], 'tue': days[1],
+            'wednesday': days[2], 'wed': days[2],
+            'thursday': days[3], 'thr': days[3], 'thu': days[3],
+            'friday': days[4], 'fri': days[4],
+            'saturday': days[5], 'sat': days[5],
+            'sunday': days[6], 'sun': days[6],
+            'week': 7,
+            'month': 30,
+            'year': 365,
+            'quarter': 90,
+            }
+        epoch -= days_from_now[last_day] * day
+        t1 = time.localtime(epoch)
+
+    # weekday_re needs to have a reference in the days_from_now dict
+    weekday_re = '(?:on) (sunday|sun|monday|mon|tuesday|tue|wednesday|wed|thursday|thr|thu|friday|fri|saturday|sat|week|month|year)'
+    for next_day in re.findall(weekday_re, s.lower()):
+        # FYI: mon=0, tue=1, wed=2, thr=3, Fri = 4, Sat=5, Sun=6
+        pastdays   = map(lambda n: n if n > 0 else n + 7,  [ t1.tm_wday - i for i in range(7) ])
+        futuredays = map(lambda n: n + 7 if n <= 0 else n, [ i - t1.tm_wday for i in range(7) ])
+        days_index = {
+            'monday': 0, 'mon': 0,
+            'tuesday': 1, 'tue': 1,
+            'wednesday': 2, 'wed': 2,
+            'thursday': 3, 'thr': 3, 'thu': 3,
+            'friday': 4, 'fri': 4,
+            'saturday': 5, 'sat': 5,
+            'sunday': 6, 'sun': 6,
+            }
+        if pastdays[days_index[next_day]] < futuredays[days_index[next_day]]:
+            #print 'DEBUG: Moving BACK %d days (past)' % (pastdays[days_index[next_day]])
+            epoch -= pastdays[days_index[next_day]] * day
+            t1 = time.localtime(epoch)
+        else:
+            #print 'DEBUG: Moving FORWARD %d days (future)' % (futuredays[days_index[next_day]])
+            epoch += futuredays[days_index[next_day]] * day
+            t1 = time.localtime(epoch)
+
+    endofday_re = '(?:cob|eod|end\s+of\s+the\s+day|close\s+of\s+business)'
+    if re.search(endofday_re,s.lower()):
+        cob = 1020 # 17:00 = 17 * 60
+        mins = t1.tm_hour * 60 + t1.tm_min
+        if mins < cob:
+            epoch += (cob - mins) * 60
+        else:
+            epoch -= (mins - cob) * 60
+        t1 = time.localtime(epoch)
+
+    noon_re = 'noon'
+    if re.search(noon_re,s.lower()):
+        noon = 720 # 12:00 = 12 * 60
+        mins = t1.tm_hour * 60 + t1.tm_min
+        if mins < noon:
+            epoch += (noon - mins) * 60
+        else:
+            epoch -= (mins - noon) * 60
+        t1 = time.localtime(epoch)
+
+    hourminute_re = '(\d{1,2}):(\d{1,2})'
+    for hour, minute in re.findall(hourminute_re,s.lower()):
+        mins_target = (int(hour) * 60) + int(minute)
+        mins = t1.tm_hour * 60 + t1.tm_min
+        if mins < mins_target:
+            epoch += (mins_target - mins) * 60
+        else:
+            epoch -= (mins - mins_target) * 60
+        t1 = time.localtime(epoch)
+
+    return epoch
 
 def parsetodolist(filepath, taskname):
     fh = open(filepath, 'r')
@@ -991,10 +1126,10 @@ def printtodolistDB(task, fh=sys.stdout,  backupmode=False, all=0):
                 fh.write(' ' * (maxlength - len(s)) + ' *\n')
             fh.write('   ' + '*' * (maxlength + 4) + '\n\n')
 
-def updatetodolistsingle(duedate, task, minutes, description):
+def updatetodolistsingle(epoch, task, minutes, description):
 
     now = datetime.datetime(*time.localtime()[:6])
-    dueby = datetime.datetime(*time.localtime(dateparse(duedate))[:6])
+    dueby = datetime.datetime(*time.localtime(epoch)[:6])
     todosDB = []
     titlesDB = []
     for todo in Todos.select(Todos.q.task==task):
@@ -1066,15 +1201,10 @@ def updatetodolist(task, filename=''):
     if needtoremovefile:
         os.remove(filename)
 
-def addtask(sdate, task, minutes, description):
-    epoch = dateparse(sdate)
-    if epoch:
-        t1 = time.localtime(epoch)
-        #print 'Parsed date "%s" to -> "%s"' % (sdate, time.strftime('%c', t1))
-        Journal(task=task, start=datetime.datetime(*t1[:6]), duration=minutes, description=description)
-    else:
-        print 'Invalid date specification "%s" used.' % options.date
-        #sys.exit(1)
+def addtask(epoch, task, minutes, description):
+    t1 = time.localtime(epoch)
+    #print 'Parsed date "%s" to -> "%s"' % (sdate, time.strftime('%c', t1))
+    Journal(task=task, start=datetime.datetime(*t1[:6]), duration=minutes, description=description)
     
 if __name__ == '__main__':
 
@@ -1096,7 +1226,7 @@ if __name__ == '__main__':
     uri = 'sqlite://%s' % (dbfile)
     #print 'uri = %s' % uri
 
-    connection = connectionForURI(uri)
+    connection = connectionForURI(uri) # debug=True
     sqlhub.processConnection = connection
 
     #Tasks.createTable()
@@ -1129,7 +1259,7 @@ Valid date format supported include:
                       help="apply action to all tasks for the particular week (list twice to mean all-all, beyond this week)")
     parser.add_option("-r", "--remove", dest='id',
                       help="remove an ID from the journal")
-    parser.add_option("-d", "--date", dest='date', default=time.strftime('%H:%M'),
+    parser.add_option("-d", "--date", dest='date',
                       help="manually set the date to be used")
     parser.add_option("-f", "--future", action="store_true", dest="future", default=False,
                       help="set in the future as in a TODO item")
@@ -1150,10 +1280,14 @@ Valid date format supported include:
 
     #print 'DEBUG: args: "%s" file: "%s"\nREL_DIR="%s", os.getcwd() = "%s"' % ('", "'.join(args), file, REL_DIR, os.getcwd())
 
-    epoch = dateparse(options.date)
-    if not epoch:
-        print 'Invalid date specification "%s" used.' % options.date
-        sys.exit(2)
+    if options.date:
+        epoch = dateparse(options.date)
+        if not epoch:
+            print 'Invalid date specification "%s" used.' % (options.date)
+            sys.exit(2)
+    else:
+        epoch = parsenaturaldatetime(" ".join(sys.argv[1:]))
+    #print 'DEBUG: %s' % time.strftime('%c', time.localtime(epoch))
 
     # Use PAM for password authentication?
     if options.pam:
@@ -1195,10 +1329,10 @@ Valid date format supported include:
             task = args[0]
             printtodolistDB(task, backupmode=options.backup)
         else:
-            if len(args) > 0:
-                lstasks(epoch, all=options.alltasks, task=args[0], backupmode=options.backup)
-            else:
+            if len(args) == 0 or not istask(args[0]):
                 lstasks(epoch, all=options.alltasks, backupmode=options.backup)
+            else:
+                lstasks(epoch, all=options.alltasks, task=args[0], backupmode=options.backup)
     elif options.id:
         try:
             j = Journal.get(options.id)
@@ -1226,19 +1360,13 @@ Valid date format supported include:
             printtodolistDB(task, all=options.alltasks)
         else:
             try:
-                id = sys.argv[sys.argv.index('-e') + 1]
-                j = Journal.get(id)
+                j = Journal.get(options.edit)
                 args.pop(args.index(id))
                 j.task, j.duration, j.description = (args[0], int(args[1]), " ".join(args[2:]))
-                if '-d' in sys.argv:
-                    epoch = dateparse(options.date)
-                    if epoch:
-                        t1 = time.localtime(epoch)
-                        j.start = datetime.datetime(*t1[:6])
-                    else:
-                        print 'Invalid date specification "%s" used. Leaving unmodified.' % options.date
-
+                t1 = time.localtime(epoch)
+                j.start = datetime.datetime(*t1[:6])
                 print 'UPDATING: (%d) %s: Worked on %s for %s minutes: %s' % (j.id, j.start, j.task, j.duration, j.description)
+
             except (SQLObjectNotFound, IndexError, ValueError), e:
                 print 'Sorry, but either %s doesn\'t exist. Or you haven\'t specify the normal <task> <min> <description> arguments.\n%s' % (id, USAGE)
     else:
@@ -1246,10 +1374,10 @@ Valid date format supported include:
             curtask, minutes, description = (args[0], int(args[1]), " ".join(args[2:]))
             if options.future:
                 #pass
-                updatetodolistsingle(options.date, curtask, minutes, description)
+                updatetodolistsingle(epoch, curtask, minutes, description)
                 #(dueby, task, minutes, description)
             else:
-                addtask(options.date, curtask, minutes, description)
+                addtask(epoch, curtask, minutes, description)
         except (IndexError, ValueError), e:
             print '%s' % USAGE
             sys.exit(1)
