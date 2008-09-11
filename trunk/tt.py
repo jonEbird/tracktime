@@ -1307,6 +1307,7 @@ Valid date format supported include:
         try:
             port = int(args[0])
             print 'Starting web server on port %d' % port
+            [ sys.argv.pop(1) for dummy in range(len(sys.argv)-2) ]
             os.chdir(REL_DIR)
             web.run(urls, globals())
         except ValueError, e:
