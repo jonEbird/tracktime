@@ -23,11 +23,13 @@ Ubuntu sudo apt-get install:
 
 == Setup the Command Completion ==
 
-  # Create a directory to hold the Tracktime application. E.g. mkdir ~/tracktime/
-  # Change directories to that newly created directory.
-  # Extract the Downloadable tarball
+  # Checkout from source for now. Don't want to maintain packages yet.
 {{{
-wget -qO - http://tracktime.googlecode.com/files/tracktime-current.tgz | tar -xvzf -
+svn checkout http://tracktime.googlecode.com/svn/trunk/ ~/tracktime/
+}}}
+  # Change directories to that newly created directory.
+{{{
+cd ~/tracktime/
 }}}
   # Setup Bash Command Completion. Then copy & paste the following line for updating your .bashrc:
 {{{
