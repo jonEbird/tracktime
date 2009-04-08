@@ -4,12 +4,16 @@
 
 == Grab Necessary Packages ==
 
-FC8 yum -y install: 
+Fedora yum -y install: 
 {{{
   python-formencode
   python-sqlite2
   python-sqlobject
-  web.py
+  python-setuptools-devel
+}}}
+Then install web.py via
+{{{
+easy_install web.py
 }}}
 
 Ubuntu sudo apt-get install: 
