@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from sqlobject import *
-import sys, os, glob, time, datetime, re, StringIO, hashlib, getpass
+import sys, os, glob, time, datetime, re, StringIO, hashlib, getpass, subprocess, pwd
 from math import log
 from stat import *
 
@@ -1205,6 +1205,45 @@ def addtask(epoch, task, minutes, description):
     t1 = time.localtime(epoch)
     #print 'Parsed date "%s" to -> "%s"' % (sdate, time.strftime('%c', t1))
     Journal(task=task, start=datetime.datetime(*t1[:6]), duration=minutes, description=description)
+
+def screen_list():
+    sessions = []
+    p = subprocess.Popen('screen -ls', stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
+                             shell=True, close_fds=True, universal_newlines=True)
+    stdout, stderr = p.communicate()
+    if not stdout and p.returncode > 1:
+        # either problem with screen or it is not installed
+        return sessions
+    for line in stdout.split('\n'):
+        line = line.strip()
+        try:
+            x, y, z = [ line.index(c) for c in '.()' ]
+            if not (x < y < z):
+                continue
+                
+            pid = line[:x].strip()
+            name = line[x+1:y].strip()
+            state = line[y+1:z].strip()
+            sessions.append((pid, name, state))
+                
+        except (ValueError), e:
+            continue        
+    return sessions
+
+def tildeglob(pathname):
+    name_ext = glob.glob(pathname.replace('~', pwd.getpwnam(os.getlogin())[5]))
+    return name_ext[0] if name_ext else ''
+
+def smart_prjname(project, projectdir="~/projects"):
+    possibles = [ tildeglob(project), tildeglob('%s/%s' % (projectdir, project)) ]
+
+    if possibles[0]:
+        return possibles[0].split('/')[-1]
+    elif possibles[1]:
+        return possibles[1].split('/')[-1]
+    else:
+        return project.split('/')[-1]
+
     
 if __name__ == '__main__':
 
@@ -1273,6 +1312,8 @@ Valid date format supported include:
                       help="define a new user for web authorization or update password")
     parser.add_option("--pam", dest="pam",
                       help="enable PAM for authentication and choose with service file to use.")
+    parser.add_option("-w", "--workon", action="store_true", dest="startworking", default=False,
+                      help="start or connect to a GNU screen session. screen name will match task name")
 
     (options, args) = parser.parse_args()
     tasksdir = options.tasksdir
@@ -1370,6 +1411,36 @@ Valid date format supported include:
 
             except (SQLObjectNotFound, IndexError, ValueError), e:
                 print 'Sorry, but either %s doesn\'t exist. Or you haven\'t specify the normal <task> <min> <description> arguments.\n%s' % (id, USAGE)
+    elif options.startworking:
+        try:
+            task = args[0]
+            #print '%s\n  %s' % (task, str(screen_list())); sys.exit(0)
+
+            screen_cmd = ''
+            for pid, name, state in screen_list():
+                if task == name:
+                    if state.lower() == 'detached':
+                        #print 'DEBUG: screen -x %s' % task
+                        screen_cmd = 'screen -x %s' % task
+                    elif state.lower() == 'attached':
+                        print 'already attached. Your PWD is %s' % (os.getcwd())
+                    else:
+                        print 'Warn: unknown screen state "%s" for session %s[%s]' % (state, name, pid)
+        
+            if not screen_cmd:
+                screen_cmd = 'screen -S %s' % task
+        
+            try:
+                start_epoch = time.time()
+                retcode = subprocess.call(screen_cmd.split())
+                print 'You were attached to session "%s" for %d minutes' % (task, (time.time() - start_epoch)/60)
+            except (OSError), e:
+                print 'Error: Could not call "%s": %s' % (screen_cmd, str(e))
+
+            
+        except (IndexError, ValueError), e:
+            print '%s' % USAGE
+            sys.exit(1)
     else:
         try:
             curtask, minutes, description = (args[0], int(args[1]), " ".join(args[2:]))
