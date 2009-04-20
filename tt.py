@@ -1428,6 +1428,9 @@ Valid date format supported include:
                         print 'Warn: unknown screen state "%s" for session %s[%s]' % (state, name, pid)
         
             if not screen_cmd:
+                # I actually like to cd to the project directory before starting my screen session, don't you?
+                if task in os.listdir(tasksdir):
+                    os.chdir('%s%s%s' % (tasksdir, os.sep, task))
                 screen_cmd = 'screen -S %s' % task
         
             try:
