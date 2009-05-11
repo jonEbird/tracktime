@@ -1429,9 +1429,12 @@ Valid date format supported include:
         
             if not screen_cmd:
                 # I actually like to cd to the project directory before starting my screen session, don't you?
-                if task in os.listdir(tasksdir):
+                try:
+                    os.stat('%s%s%s' % (tasksdir, os.sep, task))
                     os.chdir('%s%s%s' % (tasksdir, os.sep, task))
-                screen_cmd = 'screen -S %s' % task
+                except (OSError), e:
+                    pass
+                screen_cmd = 'screen -S %s' % filter(str.isalpha, task)
         
             try:
                 start_epoch = time.time()
