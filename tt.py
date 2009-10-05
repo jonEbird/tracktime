@@ -1247,43 +1247,6 @@ def smart_prjname(project, projectdir="~/projects"):
     
 if __name__ == '__main__':
 
-    #todo = parsetodolist(sys.argv[1], 'blah')
-    #printtodolist(todo)
-    #sys.exit(0)
-
-    #edittodolist(sys.argv[1], 1, 'blah, blah, blah') # e.g. "RFS1406"
-
-    #uri = 'sqlite:///home/jon/scripts/timetracker/tt.db'
-    #dbfile = '%s/tt.db' % (os.sep.join(sys.argv[0].split(os.sep)[:-1]))
-
-    if os.name == 'nt':
-        # Windows style pathing for sqlobject: sqlite:///E|/scripts/timetracker/tt.db
-        dbfile = '/%s/tt.db' % REL_DIR.replace(':\\', '|/').replace('\\', '/')
-    else:
-        dbfile = '%s%stt.db' % (REL_DIR,os.sep)
-
-    uri = 'sqlite://%s' % (dbfile)
-    #print 'uri = %s' % uri
-
-    connection = connectionForURI(uri) # debug=True
-    sqlhub.processConnection = connection
-
-    #Tasks.createTable()
-    #Todos.dropTable()
-    createTables()
-
-    #Tasks(task='RFS1374', start=DateTimeCol.now())
-
-    #todos = dumpTodos(REL_DIR)
-    #printTodos(todos)
-    #sortedtodos = timesortTodos(todos)
-    #for todo in sortedtodos:
-    #    print todo
-    
-    #print repr(Tasks.get(1))
-    #print repr(Journal.get(406))
-    #sys.exit(0)
-    #print repr(Tasks.get(
 
     from optparse import OptionParser
     USAGE = """Usage: %s task minutes description [more description] [options]
@@ -1314,12 +1277,35 @@ Valid date format supported include:
                       help="enable PAM for authentication and choose with service file to use.")
     parser.add_option("-w", "--workon", action="store_true", dest="startworking", default=False,
                       help="start or connect to a GNU screen session. screen name will match task name")
+    parser.add_option("--dburi", dest="dburi",
+                      help='database connection uri. Defaults to sqlite DB "tt.db".')
+    parser.add_option("--initdb", dest="initdb",
+                      help='Initialize the database.')
+
 
     (options, args) = parser.parse_args()
     tasksdir = options.tasksdir
-    generateTasks(tasksdir)
-
     #print 'DEBUG: args: "%s" file: "%s"\nREL_DIR="%s", os.getcwd() = "%s"' % ('", "'.join(args), file, REL_DIR, os.getcwd())
+
+    if not options.dburi:
+        if os.name == 'nt':
+            # Windows style pathing for sqlobject: sqlite:///E|/scripts/timetracker/tt.db
+            dbfile = '/%s/tt.db' % REL_DIR.replace(':\\', '|/').replace('\\', '/')
+        else:
+            dbfile = '%s%stt.db' % (REL_DIR,os.sep)
+    
+        uri = 'sqlite://%s' % (dbfile)
+
+    connection = connectionForURI(uri) # debug=True
+    sqlhub.processConnection = connection
+
+    if options.initdb:
+        createTables()
+        print 'Initializing the database.'
+        sys.exit(0)
+
+    # Unconditionally generating DB entries for first time tasks
+    generateTasks(tasksdir)
 
     if options.date:
         epoch = dateparse(options.date)
