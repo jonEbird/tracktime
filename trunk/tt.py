@@ -1421,7 +1421,15 @@ Valid date format supported include:
                 except (OSError), e:
                     pass
                 screen_cmd = 'screen -S %s' % filter(str.isalpha, task)
-        
+
+            # If you store a emacs desktop session, let's load it.
+            try:
+                os.stat('%s%s%s%s.emacs.desktop' % (tasksdir, os.sep, task, os.sep))
+                emacsclient = [ 'emacsclient', '-n', '-e', '(desktop-read "%s%s%s")' % (tasksdir, os.sep, task) ]
+                retcode = subprocess.call(emacsclient)
+            except (OSError), e:
+                pass
+
             try:
                 start_epoch = time.time()
                 retcode = subprocess.call(screen_cmd.split())
