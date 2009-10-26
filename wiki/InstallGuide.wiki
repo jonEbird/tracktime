@@ -11,10 +11,6 @@ Fedora yum -y install:
   python-sqlobject
   python-setuptools-devel
 }}}
-Then install web.py via
-{{{
-easy_install web.py
-}}}
 
 Ubuntu sudo apt-get install: 
 {{{
@@ -22,7 +18,6 @@ Ubuntu sudo apt-get install:
   python-pysqlite2
   sqlite
   python-sqlobject
-  python-webpy 
 }}}
 
 == Setup the Command Completion ==
@@ -60,7 +55,6 @@ I have not done a lot of testing on windows, but have built in support for Windo
 Okay, so what that all means is Tracktime does work on Windows. You will need to install sqlite for Windows. My recommendation is to firstly install the python module `setuptools` and afterwards use the `easy_install` to install the necessary modules:
 {{{
 sqlobject
-webpy
 formencode
 pysqlite2
 }}}
