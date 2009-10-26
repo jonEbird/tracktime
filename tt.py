@@ -31,6 +31,7 @@ urls = (
       '/updatetodo/(\w+)/(\d+)', 'updatetodoURL',
       '/clockdatafor/(\w+)', 'clockdataURL'
   )
+app = web.application(urls, globals())
 
 # Some GLOBAL variables
 REL_DIR = os.path.dirname(sys.argv[0])
@@ -47,7 +48,7 @@ color_samples = [ '#b46224', '#d9b12d', '#76a4ab', '#030e34', '#292035', '#73351
 pam = ''
 pam_service = ''
 
-class Tasks(SQLObject):
+class TasksX(SQLObject):
     
     task = StringCol()
     start = DateTimeCol()
@@ -122,7 +123,7 @@ class TasksURL:
     def GET(self):
         headerdata = getHeaderHTML()
         tasks = '<h3>Get some Tasks</h3>\n'
-        for t in Tasks.select(orderBy=Tasks.q.task):
+        for t in TasksX.select(orderBy=TasksX.q.task):
             tasks += '<p>\n   <form method="post" action="journal/%s">Task "%s": \n' % (t.task, t.task)
             tasks += '        <input style="{ width:200; }" type="text" name="journal">\n'
             tasks += '        <input styel="{ width:200; }" type="text" name="date">\n'
@@ -135,7 +136,7 @@ class NewTaskURL:
     def GET(self, year, month, day, delta):        
 
         options = ''
-        for t in Tasks.select(orderBy=Tasks.q.task):
+        for t in TasksX.select(orderBy=TasksX.q.task):
             options += '            <option value="%s">%s</option>\n' % (t.task, t.task)
         
         myform = """
@@ -376,7 +377,7 @@ class FutureURL:
             moreedits = '<h3>Start Planning TODO Items for These Tasks</h3>\n<table>\n'
             maxcolumns, columns = 5, 0
             # now for the tasks which have had no planning.
-            for t in Tasks.select(orderBy=Tasks.q.task):
+            for t in TasksX.select(orderBy=TasksX.q.task):
                 if t.task not in task_color:
                     if not columns:
                         moreedits += '<tr>\n'
@@ -717,7 +718,7 @@ class DayViewURL:
         print render.dayview(cssdata, headerdata, dayheader, clockdata, daydata, daytext, cache=False)
         
 def createTables():
-    tables = [Tasks, Journal, Todos, User, Session]
+    tables = [TasksX, Journal, Todos, User, Session]
     for table in tables:
         try:
             #print repr(table)
@@ -727,12 +728,12 @@ def createTables():
 
 def generateTasks(dir_path):
     dirTasks = [ d for d in os.listdir(dir_path) if os.path.isdir(dir_path + os.sep + d) ]
-    for t in Tasks.select(orderBy=Tasks.q.task):
+    for t in TasksX.select(orderBy=TasksX.q.task):
         if t.task in dirTasks:
             dirTasks.remove(t.task)
     #print repr(dirTasks)
     for newproject in dirTasks:
-        Tasks(task=newproject, start=DateTimeCol.now())
+        TasksX(task=newproject, start=DateTimeCol.now())
 
 def dumpTodos(dir_path, requestedtask='*'):
     all_todos = {}
@@ -1279,7 +1280,7 @@ Valid date format supported include:
                       help="start or connect to a GNU screen session. screen name will match task name")
     parser.add_option("--dburi", dest="dburi",
                       help='database connection uri. Defaults to sqlite DB "tt.db".')
-    parser.add_option("--initdb", dest="initdb",
+    parser.add_option("--initdb", dest="initdb", action="store_true", default=False,
                       help='Initialize the database.')
 
 
@@ -1296,7 +1297,7 @@ Valid date format supported include:
     
         uri = 'sqlite://%s' % (dbfile)
 
-    connection = connectionForURI(uri) # debug=True
+    connection = connectionForURI(uri, debug=False)
     sqlhub.processConnection = connection
 
     if options.initdb:
@@ -1329,14 +1330,18 @@ Valid date format supported include:
         print 'Starting web server on port %d' % 8080
         [ sys.argv.pop() for dummy in range(len(sys.argv)-1) ]
         os.chdir(REL_DIR)
-        web.run(urls, globals())
+        #app = web.application(urls, gls) #globals())
+        app.run()
+        #web.run(urls, globals())
     elif len(args) == 1:
         try:
             port = int(args[0])
             print 'Starting web server on port %d' % port
             [ sys.argv.pop(1) for dummy in range(len(sys.argv)-2) ]
             os.chdir(REL_DIR)
-            web.run(urls, globals())
+            #app = web.application(urls, globals())
+            app.run()
+            #web.run(urls, globals())
         except ValueError, e:
             pass
 
