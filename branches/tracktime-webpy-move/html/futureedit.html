@@ -1,0 +1,59 @@
+$def with (headerdata, pagetitle, content, requestedtask)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>$pagetitle</title>
+<script language="JavaScript">
+<!--
+
+//-->
+</script>
+
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+<div id="title">
+<h3><a href="/future/$requestedtask">$:pagetitle.strip()</a></h3>
+</div>
+
+<div id="futureedit">
+
+<form action='/futureedit/$requestedtask' method='post'>
+<textarea name='tododata' rows=30 cols=120>
+$:content
+</textarea><br/>
+<button class='update' type='submit'>update</button>
+</form>
+
+<form method="get" action="/future/$requestedtask" class="cancel">
+    <button type="submit">cancel</button>
+</form>
+
+</div>
+
+<div class="clear"></div>
+
+<div id="edithelp">
+<h3>Editing Help</h3>
+<p>
+Each task is identified by a line starting with a digit followed by a period and then text.
+That text is the title and any remaining text is regarded as the body.
+</p>
+<p>
+Any text in the body of your task with a digit followed by a notion of time such as
+<code>"min"</code>, <code>"hour"</code>, <code>"day"</code>
+is parsed and tallied for the total time.
+</p>
+<p>
+To mark a task as complete, simply add the text of <code>completed!</code> in the task's body.
+</p>
+</div>
+
+</body>
+</html>

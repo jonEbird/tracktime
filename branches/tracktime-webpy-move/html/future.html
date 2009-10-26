@@ -1,0 +1,181 @@
+$def with (headerdata, pagetitle, requestedtask, futuredata, moreedits)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Future Tasks</title>
+<script type="text/javascript" src="/static/prototype.js"></script>
+<script language="JavaScript">
+<!--
+
+function agent(v) { return(Math.max(navigator.userAgent.toLowerCase().indexOf(v),0)); }
+function xy(e,v) { return(v?(agent('msie')?event.clientY+document.body.scrollTop:e.pageY):(agent('msie')?event.clientX+document.body.scrollTop:e.pageX)); }
+
+function dragOBJ(d,e) {
+    function drag(e) { if(!stop) { d.style.left=(tY=xy(e)+oX-eX+'px'); } }
+    var oX=parseInt(d.style.left),oY=parseInt(d.style.top),eX=xy(e),eY=xy(e,1),tX,tY,stop;
+    document.onmousemove=drag;
+    document.onmouseup=function(){ stop=1; document.onmousemove=''; document.onmouseup=''; 
+                                   new Ajax.Updater('daytext', '/updatetask/' + d.id + '/' + (parseInt(d.style.left) - oX), {method: 'post'}); };
+}
+
+function dragNewOBJ(d,e) {
+    function drag(e) { if(!stop) { d.style.left=(tY=xy(e)+oX-eX+'px'); } }
+    var oX=parseInt(d.style.left),oY=parseInt(d.style.top),eX=xy(e),eY=xy(e,1),tX,tY,stop;
+    document.onmousemove=drag;
+    document.onmouseup=function(){ stop=1; document.onmousemove=''; document.onmouseup='';
+        \$(d.id).onmousedown='';
+        \$(d.id).removeClassName('newtask');
+	\$(d.id).addClassName('active');
+        new Ajax.Updater('daytext', '/' + d.id + '/' + (parseInt(d.style.left) - oX), 
+                { method: 'get', 
+                  insertion: Insertion.Top,
+		  onSuccess: function() { \$(minutes).value = "30"; }
+                }); 
+    };
+}
+
+function addcolor(name) {
+  \$(name + '_data').addClassName('active')
+  \$(name + '_text').addClassName('active')
+}
+function rmcolor(name) {
+  \$(name + '_data').removeClassName('active')
+  \$(name + '_text').removeClassName('active')
+}
+
+function popup() {
+    alert('hello');
+}
+
+function togglecomplete(d,id) {
+    // URL /updatetodo/completed/XX  or
+    //     /updatetodo/incomplete/XX
+    // where XX is the todo ID
+    var parent = d.parentNode;
+    if (parent.hasClassName('complete')) {
+	new Ajax.Request('/updatetodo/incomplete/' + id, {
+            method: 'post',
+            onSuccess: function(){
+		    var p = parent;
+		    p.removeClassName('complete');
+		    p.addClassName('incomplete');
+		},
+	});
+    } else {
+	new Ajax.Request('/updatetodo/completed/' + id, {
+            method: 'post',
+            onSuccess: function(){
+		    var p = parent;
+		    p.removeClassName('incomplete');
+		    p.addClassName('complete');
+		},
+	});
+    }
+}
+
+function addEvent(elm, evType, fn, useCapture)
+// addEvent and removeEvent
+// cross-browser event handling for IE5+,  NS6 and Mozilla
+// By Scott Andrew
+{
+  if (elm.addEventListener){
+ elm.addEventListener(evType, fn, useCapture);
+ return true;
+  } else if (elm.attachEvent){
+ var r = elm.attachEvent("on"+evType, fn);
+ return r;
+  } else {
+ alert("Handler could not be removed");
+  }
+}
+
+function fieldBlur(d,idfld) {
+    if (d.value!="") {
+	elem = document.getElementById( idfld );
+	remotos = new datosServidor;
+	nt = remotos.enviar(urlBase + "?fieldname=" +escape(elem.id)+ "&content="+escape(d.value)+"&"+formVars,"");
+	elem.innerHTML = nt;
+	changing = false;
+	return false;
+    }
+}
+
+function committodobody(d, num) {
+    // alert(d.textContent);
+    new Ajax.Request('/edittodobody/$requestedtask/' + num, {
+	method: 'post',
+	parameters: \$('todobodyedit').serialize(true),
+	onSuccess: function(transport){
+	    var response = transport.responseText.replace('\n', '\n<br>\n') || "no response text";
+	    var parent = d.parentNode;
+	    parent.innerHTML = response;
+	},
+    });
+}
+
+function edittodobody(d, num) {
+    var parent = d.parentNode;
+    var width = d.offsetWidth;
+    var height = d.offsetHeight;
+    var text = d.innerHTML.replace('\n<br>\n', '\n');
+    d.innerHTML = "<textarea name=\"todoparagraph\" id=\"todobodyedit\" style=\"width: "+width+"px; height: "+height+"px;\" onblur=\"committodobody(this,"+num+");\">" + text + "</textarea>";
+    d.firstChild.focus();
+}
+
+function addsubmit(d,e) {
+    var parent = d.parentNode;
+    var text = d.childNodes[0].data;
+    var form = document.createElement("form");
+    form.action = "/future/complete";
+    form.method = "post";
+    var submit = document.createElement("input");
+    submit.type = "submit";
+    submit.value = "done";
+    form.appendChild(submit);
+
+    /* parent.replaceChild(form, d);
+    form.appendChild(d); */
+    d.appendChild(form);
+}
+
+function Redirect(location) {
+    window.location=location;
+}
+
+//-->
+</script>
+
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+<style type="text/css">
+/* <![CDATA[ */
+/* ]]> */
+</style>
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+<div id="title">
+$:pagetitle.strip()
+$if requestedtask:
+    <noscript><a href="/futureedit/$requestedtask">EDIT</a></noscript>
+</div>
+
+<div class="clear"></div>
+
+$if requestedtask:
+    <div id="future">
+$else:
+    <div id="future">
+$:futuredata.strip()
+</div>
+
+<div id="moreedits">
+$:moreedits.strip()
+</div>
+
+</body>
+</html>

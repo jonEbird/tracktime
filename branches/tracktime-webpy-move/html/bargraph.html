@@ -1,0 +1,27 @@
+$def with (headerdata, title, bargraph)
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Summary for the Period</title>
+<link type="text/css" rel="stylesheet" href="/static/style.css" media="all">
+<style type="text/css">
+/* <![CDATA[ */
+/* ]]> */
+</style>
+</head>
+<body>
+
+<p class="header">
+$:headerdata.strip()
+</p>
+
+<h1>$title</h1>
+
+$if bargraph:
+    $:bargraph
+$else:
+    <p>No work done during this period.</p>
+
+</body>
+</html>

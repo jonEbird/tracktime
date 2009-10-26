@@ -1,0 +1,37 @@
+
+1. Grab Necessary Packages
+---------------------------------------------------
+
+FC8 yum -y install:
+  python-formencode
+  python-sqlite2
+  python-sqlobject
+  web.py
+
+Ubuntu sudo apt-get install:
+  python
+  python-pysqlite2
+  sqlite
+  python-sqlobject
+  python-webpy 
+
+2. Setup the Command Completion
+--------------------------------------------------
+
+a. Create a directory to hold the TrackTime application. E.g. mkdir ~/tracktime/
+b. Change directories to that newly created directory.
+c. Extract the Downloadable tarball
+     wget -qO - http://tracktime.googlecode.com/files/tracktime-current.tgz | tar -xvzf -
+d. Setup Bash Command Completion
+   Then copy & paste the following line for updating your .bashrc:
+     echo "source $(pwd)/completion.bash $(pwd)/" >> ~/.bashrc
+
+3. Prepare Backups
+--------------------------------------------------
+
+a. Staying within the same project directory, as created above in 2a, create a .backup directory.
+     mkdir .backup
+b. Now add the following line to your crontab
+     crontab -l > crontab.tmp
+     printf "# Backup your TrackTime data\n55 * * * * $(pwd)/backup.sh\n" >> crontab.tmp
+     crontab crontab.tmp

@@ -1,0 +1,81 @@
+
+/*
+   general
+   --------------- */
+
+* { padding: 0; margin: 0 }
+* { font-family: sans-serif, arial, "lucida console" }
+a:link { color: black; }
+a:visited { color: black; }
+a:hover { color: red; }
+p code { font-family: monospace }
+
+/*
+   header
+   --------------- */
+p.header a:link { color: black; }
+p.header a:visited { color: black; }
+p.header a:hover { color: red; }
+
+/* 
+   dayview.html
+   --------------- */
+div#newtask { font-size: 15px; }
+p.dayheading a:link { color: black; }
+p.dayheading a:visited { color: black; }
+p.dayheading a:hover { color: red; }
+p.dayheading a.arrownav { text-decoration: none; color:red; margin: 0 0.25em 0 0.25em; }
+.dayheading { font-size: 30px; }
+.clockeddata { border-width: 1px; border-style: solid solid none solid; }
+.newtask { border-width: 1px; background: yellow}
+.clockedinfo { font-size: 30px; }
+div#daydata p { border-color: blue; }
+.active { background: red; border-color: red }
+form.newtask { float: left; background: white; }
+form.cancel { float: left; }
+div#daytext { margin-top: 30px; }
+input.delete { font-size: 10px; }
+div.clear { clear:both }
+
+/*
+   weekview.html
+   --------------- */
+* { font-family: sans-serif, arial, "lucida console" }
+table a { text-decoration: none; color:black; }
+table.taskmatrix { border-spacing: 10px; border: solid; padding: 5px 5px; margin: 10px 20px; }
+table td { padding: 0 2px; }
+tr.d0 td { background-color: #cc9999; color: black; }   /* #cc9999 */
+tr.d1 td { background-color: #9999cc; color: black; }   /* #9999cc */
+tr.workday { background-color: #ffff00; color: black; } /* #ffff00 */
+   
+/*
+   tasks.html
+   --------------- */
+.detail { background-color:336699; width: 120 }
+.time { width: 20 }
+
+/*
+   future.html
+   --------------- */
+div#bars { padding: 0 0 1em 0; }
+div#bars p { float: left; margin: 0 0 0 .25em; }
+
+p.future { border-color: blue; border; solid; }
+div#title h3 { font-family: sans-serif, arial; letter-spacing: 0.1ex; padding: 1em 0 0 0; }
+div#future ol { list-style-type: decimal; list-style-position: inside;}
+div#future ol li { margin: 0 0 0 2em; }
+
+li { line-height: 1em; }
+div#future p.todotitle { font-variant: small-caps; float: left; padding: 0 2em 0 0; }
+div#future p.tododuedate { text-align: right; padding: 0 2em 0 0; position: relative; } /* top: -1em; */
+div#future p.todobody { color: grey; } /*opacity:.5; filter: alpha(opacity=50);*/
+li.incomplete { text-transform: capitalize; }
+li.incomplete p { text-transform: none; }
+li.complete { text-decoration: line-through; color: #990000; text-transform: capitalize; }
+li.complete p.todobody { display: none; }
+
+div#futureedit { padding: 0 0 0 .5em; }
+button.update { float: left; }
+div#moreedits { padding: 1em 0 0 0; }
+div#edithelp { padding: 1em 0 0 0; }
+div#edithelp p { padding: .25em 0 0 .5em; width: 50%; }
