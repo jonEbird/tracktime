@@ -1402,12 +1402,13 @@ Valid date format supported include:
             task = args[0]
             #print '%s\n  %s' % (task, str(screen_list())); sys.exit(0)
 
+            screen_task = filter(str.isalpha, task)
             screen_cmd = ''
             for pid, name, state in screen_list():
-                if task == name:
+                if screen_task == name:
                     if state.lower() == 'detached':
-                        #print 'DEBUG: screen -x %s' % task
-                        screen_cmd = 'screen -x %s' % task
+                        #print 'DEBUG: screen -x %s' % screen_task
+                        screen_cmd = 'screen -x %s' % screen_task
                     elif state.lower() == 'attached':
                         print 'already attached. Your PWD is %s' % (os.getcwd())
                     else:
@@ -1420,7 +1421,7 @@ Valid date format supported include:
                     os.chdir('%s%s%s' % (tasksdir, os.sep, task))
                 except (OSError), e:
                     pass
-                screen_cmd = 'screen -S %s' % filter(str.isalpha, task)
+                screen_cmd = 'screen -S %s' % (screen_task)
 
             # If you store a emacs desktop session, let's load it.
             try:
@@ -1432,8 +1433,9 @@ Valid date format supported include:
 
             try:
                 start_epoch = time.time()
+                #print 'DEBUG: running "%s"' % (screen_cmd)
                 retcode = subprocess.call(screen_cmd.split())
-                print 'You were attached to session "%s" for %d minutes' % (task, (time.time() - start_epoch)/60)
+                print 'You were attached to session "%s" for %d minutes' % (screen_task, (time.time() - start_epoch)/60)
             except (OSError), e:
                 print 'Error: Could not call "%s": %s' % (screen_cmd, str(e))
 
