@@ -35,6 +35,20 @@ cd ~/tracktime/
 echo "source $(pwd)/completion.bash $(pwd)/" >> ~/.bashrc
 }}}
 
+== Dry Run & DB Initialization ==
+  # Source your newly updated ~/.bashrc file (gets your PATH updated)
+{{{
+source ~/.bashrc
+}}}
+  # Init your DB
+{{{
+tt.py --initdb=~/tracktime/tt.db
+}}}
+  # Quick test. With a brand new DB, you will see nothing, but no errors.
+{{{
+tt.py -l
+}}}
+
 == Prepare Backups ==
 
   # Staying within the same project directory, as created above in 2a, create a .backup directory.
