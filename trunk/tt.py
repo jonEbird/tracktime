@@ -1284,8 +1284,6 @@ Valid date format supported include:
                       help="start or connect to a GNU screen session. screen name will match task name")
     parser.add_option("--dburi", dest="dburi",
                       help='database connection uri. Defaults to sqlite DB "tt.db".')
-    parser.add_option("--initdb", dest="initdb",
-                      help='Initialize the database.')
 
 
     (options, args) = parser.parse_args()
@@ -1306,10 +1304,8 @@ Valid date format supported include:
     connection = connectionForURI(uri) # debug=True
     sqlhub.processConnection = connection
 
-    if options.initdb:
-        createTables()
-        print 'Initializing the database.'
-        sys.exit(0)
+    # Its easier to just ensure the tables, and DB in general, is created than call it via arguments
+    createTables()
 
     # Unconditionally generating DB entries for first time tasks
     generateTasks(tasksdir)
