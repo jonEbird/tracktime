@@ -35,6 +35,11 @@ urls = (
 # Some GLOBAL variables
 REL_DIR = os.path.dirname(sys.argv[0])
 if not REL_DIR: REL_DIR = '.'
+orig_dir = os.getcwd()
+os.chdir(REL_DIR)
+FULL_DIR = os.getcwd()
+os.chdir(orig_dir)
+
 negative_tasks = 'lunch break' # whitespace separated tasks which take away from clocked in time
 formats = ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y-%m-%d %H:%M', '%m/%d', '%m/%d/%y', '%m/%d/%Y', '%m-%d-%y', '%m-%d-%Y', '%H:%M', '%M:%M:%S')
 long_future = 1999999999
@@ -1290,11 +1295,13 @@ Valid date format supported include:
     if not options.dburi:
         if os.name == 'nt':
             # Windows style pathing for sqlobject: sqlite:///E|/scripts/timetracker/tt.db
-            dbfile = '/%s/tt.db' % REL_DIR.replace(':\\', '|/').replace('\\', '/')
+            dbfile = '/%s/tt.db' % FULL_DIR.replace(':\\', '|/').replace('\\', '/')
         else:
-            dbfile = '%s%stt.db' % (REL_DIR,os.sep)
-    
+            dbfile = '%s%stt.db' % (FULL_DIR,os.sep)
+
         uri = 'sqlite://%s' % (dbfile)
+    else:
+        uri = options.dburi
 
     connection = connectionForURI(uri) # debug=True
     sqlhub.processConnection = connection
