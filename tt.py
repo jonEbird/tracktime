@@ -1057,8 +1057,8 @@ def printtodolist(todolist):
 
 class edittodolistURL:
     def POST(self, task, idx):
-        input = web.input()
-        newtask = input.todoparagraph
+        i = web.input()
+        newtask = i.todoparagraph
         #print newtask
         if loggedin():
             print edittodolist(task, idx, newtask)
@@ -1131,7 +1131,17 @@ def printtodolistDB(task, fh=sys.stdout,  backupmode=False, all=0):
                 fh.write(' ' * (maxlength - len(s)) + ' *\n')
             fh.write('   ' + '*' * (maxlength + 4) + '\n\n')
 
-def updatetodolistsingle(epoch, task, minutes, description):
+def exttodo_trigger(action, epoch, task, minutes, title, debug=False):
+    """ Call external 
+    E.g. ./milk.py add architecture 2011-01-08 240 Compete Q1 roadmap"""
+    exttodos = glob.glob("%s%s.exttodo_milk*" % (REL_DIR, os.sep))
+    for exttodo in exttodos:
+        datestr = time.strftime('%Y-%m-%d', time.localtime(epoch))
+        if debug: print 'DEBUG: subprocess.call(%s)' % (str([exttodo, action, task, datestr, str(minutes), title]))
+        ret = subprocess.call([exttodo, action, task, datestr, str(minutes), title])
+        if debug: print 'DEBUG: ret = %d' % ret
+
+def updatetodolistsingle(epoch, task, minutes, title):
 
     now = datetime.datetime(*time.localtime()[:6])
     dueby = datetime.datetime(*time.localtime(epoch)[:6])
@@ -1142,8 +1152,8 @@ def updatetodolistsingle(epoch, task, minutes, description):
         titlesDB.append(todo.title.strip())
         todosDB.append(todo)
 
-    if description.strip() in titlesDB:
-        todoDB = todosDB[titlesDB.index(description.strip())]
+    if title.strip() in titlesDB:
+        todoDB = todosDB[titlesDB.index(title.strip())]
         todoDB.duedate = dueby
         todoDB.tasktime = int(minutes)
         #todoDB.completed = completed != 0
@@ -1151,7 +1161,8 @@ def updatetodolistsingle(epoch, task, minutes, description):
         todoDB.journal = ""
         #todoDB.body = body
     else:
-        Todos(task=task, title=description, body='\nEntered via commandline.\n', submitdate=now, modifydate=now, duedate=dueby, duration=int(minutes), createdfrom='commandline', completed=False, journal="")
+        Todos(task=task, title=title, body='\nEntered via commandline.\n', submitdate=now, modifydate=now, duedate=dueby, duration=int(minutes), createdfrom='commandline', completed=False, journal="")
+        exttodo_trigger('add', epoch, task, minutes, title)
 
 
 def updatetodolist(task, filename=''):
@@ -1190,6 +1201,7 @@ def updatetodolist(task, filename=''):
         now   = datetime.datetime(*time.localtime()[:6])
         dueby = datetime.datetime(*time.localtime(duedate)[:6])
 
+        # Updating the Todo item?
         if title.strip() in titlesDB:
             todoDB = todosDB[titlesDB.index(title.strip())]
             if body.strip() == todoDB.body.strip(): # nice use of variable name + function call
@@ -1257,8 +1269,7 @@ if __name__ == '__main__':
     USAGE = """Usage: %s task minutes description [more description] [options]
 
 Valid date format supported include:
-\"%s\"""" % \
-            (os.path.basename(sys.argv[0]), '", "'.join(formats))    
+%s""" % (os.path.basename(sys.argv[0]), ', '.join(formats))
     parser = OptionParser(usage=USAGE)
     parser.add_option("-l", "--listtodaytasks", action="store_true", dest="listtodaytasks", default=False,
                       help="list out today's tasks")
