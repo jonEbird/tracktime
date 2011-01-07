@@ -51,26 +51,39 @@ def init():
     except (Exception), e:
         return '', '', '', ''
 
-def printtodos(mh, list_id):
+def printtodos(mh, list_id, human=True):
     """ Prints out the tasks in the particular list
     """
     # Now list out the tasks in that list
     tasks = mh.tasks.getList(list_id=list_id)
-    print 'TrackTime RTM tasks:'
+    if human: print 'TrackTime RTM tasks:'
     for task in tasks.tasks.list.taskseries:
-
+        # Basic info
         if task.task.completed:
-            line = '--"%s"--' % (task.name)
+            if human:
+                line = '--"%s"--' % (task.name)
+            else:
+                line = 'completed "%s"' % (task.name)
         else:
-            line = '  "%s"' % (task.name)
+            if human:
+                line = '  "%s"' % (task.name)
+            else:
+                line = 'incomplete "%s"' % (task.name)
+        # completed?
         if task.task.due:
-            line += ' due on %s' % (task.task.due)
+            if human:
+                line += ' due on %s' % (task.task.due)
+            else:
+                line += ' %s' % (task.task.due)
         else:
-            line += ' no duedate' 
+            if human:
+                line += ' no duedate'
+            else:
+                line += ' None'
         if task.tags:
             line += ' #%s' % (task.tags.tag)
         print line
-        if task.notes:
+        if task.notes and human:
             for i, note in enumerate(task.notes.note):
                 print '    Note(%d): %s' % (i, getattr(note, '$t'))
 
@@ -87,10 +100,18 @@ if __name__ == "__main__":
 
     # Add - [epoch, task, minutes, title]
     USAGE = """Usage: milk.py add|update|complete|uncomplete project duedate minutes title
-       milk.py list"""
+       milk.py list|extract
+       milk.py init"""
     try:
+        # single argument commands
         if sys.argv[1] == "list":
             printtodos(mh, milk_lid)
+            sys.exit(0)
+        elif sys.argv[1] == "extract":
+            printtodos(mh, milk_lid, human=False)
+            sys.exit(0)
+        elif sys.argv[1] == "init":
+            create_milkinfo()
             sys.exit(0)
         action, project, duedate, minutes, title = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], ' '.join(sys.argv[5:])
         #print 'DEBUG: "%s" to project "%s" identified by title "%s" for %s min' % (action, project, title, minutes)

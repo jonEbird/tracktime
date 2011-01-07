@@ -1134,7 +1134,7 @@ def printtodolistDB(task, fh=sys.stdout,  backupmode=False, all=0):
 def exttodo_trigger(action, epoch, task, minutes, title, debug=False):
     """ Call external 
     E.g. ./milk.py add architecture 2011-01-08 240 Compete Q1 roadmap"""
-    exttodos = glob.glob("%s%s.exttodo_milk*" % (REL_DIR, os.sep))
+    exttodos = glob.glob("%s%s.exttodo_*" % (REL_DIR, os.sep))
     for exttodo in exttodos:
         datestr = time.strftime('%Y-%m-%d', time.localtime(epoch))
         if debug: print 'DEBUG: subprocess.call(%s)' % (str([exttodo, action, task, datestr, str(minutes), title]))
